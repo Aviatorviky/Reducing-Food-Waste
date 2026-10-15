@@ -1,0 +1,199 @@
+
+{% extends "base.html" %}
+{% block title %}Donation #{{ donation.id }} | SmartBite{% endblock %}
+{% block page_heading %}Donation Details{% endblock %}
+
+{% block content %}
+<div class="welcome-row">
+    <div>
+        <h1>{{ donation.food_name }}</h1>
+        <p>Donation #{{ donation.id }} · {{ "%.2f"|format(donation.quantity_kg) }} kg</p>
+    </div>
+    <a class="button" href="{{ url_for('donations') }}">← All donations</a>
+</div>
+
+<div class="stats-grid">
+    <article class="stat-card">
+        <div class="stat-top">Safety status</div>
+        <div class="stat-value">{{ donation.safety_status|title }}</div>
+        <p class="stat-description">Food handling review</p>
+    </article>
+    <article class="stat-card">
+        <div class="stat-top">Donation status</div>
+        <div class="stat-value">{{ donation.status|replace("_", " ")|title }}</div>
+        <p class="stat-description">Handover progress</p>
+    </article>
+    <article class="stat-card">
+        <div class="stat-top">Quantity</div>
+        <div class="stat-value">{{ "%.2f"|format(donation.quantity_kg) }}<span>kg</span></div>
+        <p class="stat-description">Reported surplus</p>
+    </article>
+</div>
+
+<div class="content-grid">
+    <section class="form-card">
+        <div class="card-heading">
+            <div>
+                <h2>Food safety review</h2>
+                <p>Review the information before making the listing available.</p>
+            </div>
+        </div>
+
+        <p><strong>Prepared:</strong> {{ donation.prepared_at }}</p>
+        <p><strong>Collection deadline:</strong> {{ donation.collection_deadline }}</p>
+        <p><strong>Storage details:</strong> {{ donation.storage_details }}</p>
+        <p><strong>Allergens:</strong> {{ donation.allergens }}</p>
+        <p><strong>Reviewer:</strong> {{ donation.safety_verified_by or "Not reviewed" }}</p>
+        <p><strong>Review notes:</strong> {{ donation.safety_notes or "No notes" }}</p>
+
+        {% if donation.status == "pending_review" %}
+        <form method="POST" class="review-form">
+            <div class="field">
+                <label for="reviewer">Authorized reviewer name</label>
+                <input id="reviewer" name="reviewer" maxlength="100" required>
+            </div>
+
+            <div class="field">
+                <label for="safety_notes">Inspection notes and decision rationale</label>
+                <textarea id="safety_notes" name="safety_notes"
+                          rows="4" maxlength="1000" required></textarea>
+            </div>
+
+            <p class="form-hint">
+                Approve only after a qualified, authorized person has verified
+                applicable handling, storage, time and temperature requirements.
+                This form alone does not establish that food is safe.
+            </p>
+
+            <button class="button primary" name="action"
+                    value="approve_safety" type="submit">
+                Approve safety review
+            </button>
+            <button class="button" name="action"
+                    value="reject_safety" type="submit">
+                Reject listing
+            </button>
+        </form>
+        {% endif %}
+    </section>
+
+    <section class="table-card records-card">
+        <div class="card-heading records-heading">
+            <div>
+                <h2>Recommended recipients</h2>
+                <p>Verified organizations matching quantity and pickup availability</p>
+            </div>
+        </div>
+
+        {% if donation.status != "available" %}
+            <div class="empty-state compact">
+                <h3>Matching is not available yet</h3>
+                <p>The listing must pass safety review and be available for collection.</p>
+            </div>
+        {% elif matches %}
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Organization</th>
+                            <th>Distance</th>
+                            <th>Pickup window</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for match in matches %}
+                        <tr>
+                            <td>
+                                <strong>{{ match.recipient.organization_name }}</strong>
+                                <br>{{ match.recipient.organization_type }}
+                                <br><small>{{ match.recipient.address }}</small>
+                            </td>
+                            <td>{{ match.distance_km }} km</td>
+                            <td>
+                                {{ match.recipient.pickup_start }}–{{ match.recipient.pickup_end }}
+                            </td>
+                            <td>
+                                <form method="POST">
+                                    <input type="hidden" name="recipient_id"
+                                           value="{{ match.recipient.id }}">
+                                    <button class="button primary"
+                                            name="action" value="accept"
+                                            type="submit">
+                                        Assign
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <h3>No eligible matches found</h3>
+                <p>Check recipient verification, capacity, coordinates,
+                   pickup windows and the collection deadline.</p>
+            </div>
+        {% endif %}
+
+        {% if donation.status == "accepted" %}
+        <div class="form-card">
+            <h3>Collection progress</h3>
+            <p><strong>Assigned recipient:</strong>
+                {{ donation.recipient_name or "Not assigned" }}</p>
+            <form method="POST">
+                <button class="button primary full-width" name="action"
+                        value="picked_up" type="submit">
+                    Confirm collection
+                </button>
+            </form>
+        </div>
+        {% elif donation.status == "picked_up" %}
+        <div class="form-card">
+            <h3>Confirm handover</h3>
+            <p>Confirm that the receiving organization has received the donation.</p>
+            <form method="POST">
+                <button class="button primary full-width" name="action"
+                        value="completed" type="submit">
+                    Confirm completed donation
+                </button>
+            </form>
+        </div>
+        {% elif donation.status == "completed" %}
+        <div class="notice">
+            <span class="notice-icon">✓</span>
+            <div>
+                <strong>Handover completed</strong>
+                <p>This donation is included in completed donation totals.</p>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+</div>
+
+<section class="table-card records-card" style="margin-top: 22px;">
+    <div class="card-heading records-heading">
+        <div>
+            <h2>Donation history</h2>
+            <p>Recorded actions for this listing</p>
+        </div>
+    </div>
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr><th>Event</th><th>Notes</th><th>Time recorded</th></tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>{{ event.event_type|replace("_", " ")|title }}</td>
+                    <td>{{ event.notes }}</td>
+                    <td>{{ event.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

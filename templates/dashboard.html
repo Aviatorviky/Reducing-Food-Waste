@@ -1,0 +1,113 @@
+
+{% extends "base.html" %}
+
+{% block title %}Dashboard | SmartBite{% endblock %}
+{% block page_heading %}Overview{% endblock %}
+
+{% block content %}
+<div class="welcome-row">
+    <div>
+        <h1>Your cafeteria, at a glance.</h1>
+        <p>Monitor food preparation, utilization and leftover quantities.</p>
+    </div>
+    <a class="button primary" href="{{ url_for('waste_tracking') }}">
+        + Add waste record
+    </a>
+</div>
+
+<div class="notice">
+    <span class="notice-icon">i</span>
+    <div>
+        <strong>Monitoring mode</strong>
+        <p>Metrics below reflect all records currently stored in the database.</p>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <article class="stat-card">
+        <div class="stat-top">
+            <span>Food prepared</span>
+            <span class="stat-icon green">↗</span>
+        </div>
+        <div class="stat-value">{{ "%.2f"|format(stats.prepared_kg) }}<span>kg</span></div>
+        <p class="stat-description">Total recorded quantity</p>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-top">
+            <span>Food served</span>
+            <span class="stat-icon blue">✓</span>
+        </div>
+        <div class="stat-value">{{ "%.2f"|format(stats.served_kg) }}<span>kg</span></div>
+        <p class="stat-description">Recorded consumption served</p>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-top">
+            <span>Leftover food</span>
+            <span class="stat-icon orange">!</span>
+        </div>
+        <div class="stat-value">{{ "%.2f"|format(stats.leftover_kg) }}<span>kg</span></div>
+        <p class="stat-description">Requires review and classification</p>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-top">
+            <span>Leftover rate</span>
+            <span class="stat-icon purple">%</span>
+        </div>
+        <div class="stat-value">{{ "%.1f"|format(stats.waste_percentage) }}<span>%</span></div>
+        <p class="stat-description">Leftovers ÷ prepared quantity</p>
+    </article>
+</div>
+
+<div class="section-heading">
+    <div>
+        <h2>Recent food records</h2>
+        <p>Latest entries saved to your database</p>
+    </div>
+    <a class="text-link" href="{{ url_for('waste_tracking') }}">View all records →</a>
+</div>
+
+<div class="table-card">
+    {% if stats.recent_records %}
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Food item</th>
+                    <th>Prepared</th>
+                    <th>Served</th>
+                    <th>Leftover</th>
+                    <th>Recorded at</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in stats.recent_records %}
+                <tr>
+                    <td><strong>{{ record.food_name }}</strong></td>
+                    <td>{{ "%.2f"|format(record.prepared_kg) }} kg</td>
+                    <td>{{ "%.2f"|format(record.served_kg) }} kg</td>
+                    <td>
+                        <span class="quantity-pill">
+                            {{ "%.2f"|format(record.leftover_kg) }} kg
+                        </span>
+                    </td>
+                    <td>{{ record.recorded_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">♧</div>
+        <h3>No records yet</h3>
+        <p>Add your first food record to see real data here.</p>
+        <a class="button primary" href="{{ url_for('waste_tracking') }}">
+            Create first record
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

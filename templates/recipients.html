@@ -1,0 +1,167 @@
+
+{% extends "base.html" %}
+{% block title %}Recipient Directory | SmartBite{% endblock %}
+{% block page_heading %}Recipient Directory{% endblock %}
+
+{% block content %}
+<div class="welcome-row">
+    <div>
+        <h1>Build a trusted network.</h1>
+        <p>Register NGOs, shelters and community kitchens for food redistribution.</p>
+    </div>
+</div>
+
+<div class="notice">
+    <span class="notice-icon">i</span>
+    <div>
+        <strong>Verify before matching</strong>
+        <p>Check the organization's identity, authorization, contact details,
+           capacity and safe food-handling arrangements before approval.</p>
+    </div>
+</div>
+
+<div class="content-grid">
+    <section class="form-card">
+        <div class="card-heading">
+            <span class="form-icon">＋</span>
+            <div>
+                <h2>Register an organization</h2>
+                <p>New entries require verification.</p>
+            </div>
+        </div>
+
+        <form method="POST">
+            <div class="field">
+                <label for="organization_name">Organization name</label>
+                <input id="organization_name" name="organization_name"
+                       maxlength="150" required>
+            </div>
+
+            <div class="field">
+                <label for="organization_type">Organization type</label>
+                <select id="organization_type" name="organization_type" required>
+                    <option value="NGO">NGO</option>
+                    <option value="Shelter">Shelter</option>
+                    <option value="Community kitchen">Community kitchen</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="contact_name">Contact person</label>
+                <input id="contact_name" name="contact_name" maxlength="100" required>
+            </div>
+
+            <div class="field">
+                <label for="contact_email">Contact email</label>
+                <input id="contact_email" name="contact_email"
+                       type="email" maxlength="254" required>
+            </div>
+
+            <div class="field">
+                <label for="address">Pickup address</label>
+                <textarea id="address" name="address" rows="2"
+                          maxlength="500" required></textarea>
+            </div>
+
+            <div class="field">
+                <label for="latitude">Latitude</label>
+                <input id="latitude" name="latitude" type="number"
+                       min="-90" max="90" step="any" required>
+            </div>
+
+            <div class="field">
+                <label for="longitude">Longitude</label>
+                <input id="longitude" name="longitude" type="number"
+                       min="-180" max="180" step="any" required>
+            </div>
+
+            <div class="field">
+                <label for="min_quantity_kg">Minimum accepted quantity (kg)</label>
+                <input id="min_quantity_kg" name="min_quantity_kg"
+                       type="number" min="0" step="0.01" value="0" required>
+            </div>
+
+            <div class="field">
+                <label for="max_quantity_kg">Maximum accepted quantity (kg)</label>
+                <input id="max_quantity_kg" name="max_quantity_kg"
+                       type="number" min="0.01" step="0.01" required>
+            </div>
+
+            <div class="field">
+                <label for="pickup_start">Pickup window starts</label>
+                <input id="pickup_start" name="pickup_start" type="time" required>
+            </div>
+
+            <div class="field">
+                <label for="pickup_end">Pickup window ends</label>
+                <input id="pickup_end" name="pickup_end" type="time" required>
+            </div>
+
+            <button class="button primary full-width" type="submit">
+                Register organization
+            </button>
+        </form>
+    </section>
+
+    <section class="table-card records-card">
+        <div class="card-heading records-heading">
+            <div>
+                <h2>Registered organizations</h2>
+                <p>{{ recipients|length }} entries</p>
+            </div>
+        </div>
+
+        {% if recipients %}
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Organization</th>
+                        <th>Capacity</th>
+                        <th>Verification</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in recipients %}
+                    <tr>
+                        <td>
+                            <strong>{{ r.organization_name }}</strong>
+                            <br>{{ r.organization_type }}
+                            <br><small>{{ r.address }}</small>
+                        </td>
+                        <td>
+                            {{ r.min_quantity_kg }}–{{ r.max_quantity_kg }} kg
+                        </td>
+                        <td>{{ r.verification_status|title }}</td>
+                        <td>
+                            {% if r.verification_status == "pending" %}
+                            <form method="POST"
+                                  action="{{ url_for('verify_recipient', recipient_id=r.id) }}">
+                                <button class="button primary" name="decision"
+                                        value="verified" type="submit">
+                                    Verify
+                                </button>
+                                <button class="button" name="decision"
+                                        value="rejected" type="submit">
+                                    Reject
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-link">Reviewed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state compact">
+            <h3>No organizations registered</h3>
+            <p>Add an organization to begin building the directory.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

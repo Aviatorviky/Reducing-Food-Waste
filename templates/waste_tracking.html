@@ -1,0 +1,100 @@
+
+{% extends "base.html" %}
+
+{% block title %}Waste Tracking | SmartBite{% endblock %}
+{% block page_heading %}Waste Tracking{% endblock %}
+
+{% block content %}
+<div class="welcome-row">
+    <div>
+        <h1>Record food quantities.</h1>
+        <p>Enter the quantities prepared, served and left over for a food item.</p>
+    </div>
+</div>
+
+<div class="content-grid">
+    <section class="form-card">
+        <div class="card-heading">
+            <span class="form-icon">＋</span>
+            <div>
+                <h2>New food record</h2>
+                <p>All quantities must be entered in kilograms.</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('waste_tracking') }}">
+            <div class="field">
+                <label for="food_name">Food item</label>
+                <input id="food_name" name="food_name" type="text"
+                       maxlength="100" placeholder="e.g. Rice, Dal, Roti"
+                       required>
+            </div>
+
+            <div class="field">
+                <label for="prepared_kg">Food prepared (kg)</label>
+                <input id="prepared_kg" name="prepared_kg" type="number"
+                       min="0.01" step="0.01" placeholder="20.00" required>
+            </div>
+
+            <div class="field">
+                <label for="served_kg">Food served (kg)</label>
+                <input id="served_kg" name="served_kg" type="number"
+                       min="0" step="0.01" placeholder="17.00" required>
+            </div>
+
+            <div class="field">
+                <label for="leftover_kg">Food left over (kg)</label>
+                <input id="leftover_kg" name="leftover_kg" type="number"
+                       min="0" step="0.01" placeholder="3.00" required>
+            </div>
+
+            <p class="form-hint">
+                Served food + leftover food must not exceed prepared food.
+            </p>
+
+            <button class="button primary full-width" type="submit">
+                Save food record
+            </button>
+        </form>
+    </section>
+
+    <section class="table-card records-card">
+        <div class="card-heading records-heading">
+            <div>
+                <h2>All food records</h2>
+                <p>{{ records|length }} saved entries</p>
+            </div>
+        </div>
+
+        {% if records %}
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Food item</th>
+                        <th>Prepared</th>
+                        <th>Served</th>
+                        <th>Leftover</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td><strong>{{ record.food_name }}</strong></td>
+                        <td>{{ "%.2f"|format(record.prepared_kg) }} kg</td>
+                        <td>{{ "%.2f"|format(record.served_kg) }} kg</td>
+                        <td>{{ "%.2f"|format(record.leftover_kg) }} kg</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state compact">
+            <h3>No entries available</h3>
+            <p>Your saved records will appear here.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
